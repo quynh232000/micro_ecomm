@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  # --- Postgres ---
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: ecommerce
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # --- Redis ---
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  # --- Elasticsearch ---
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+
+  # --- RabbitMQ ---
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  # --- Kong ---
+  kong-database:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: kong
+    ports:
+      - "5433:5432"
+
+  kong:
+    build: ./kong
+    depends_on:
+      - kong-database
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_PASSWORD: kong
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    restart: always
+  
+# --- Microservices ---
+# auth-service:
+#   build: ../../services/auth-service
+#   ports:
+#     - "5000:5000"
+#   environment:
+#     DB_HOST: postgres
+#     DB_PORT: 5432
+#     DB_USER: root
+#     DB_PASS: root
+#     DB_NAME: ecommerce
+#     JWT_SECRET: secret
+#   depends_on:
+#     - postgres
+
+# product-service:
+#   build: ../../services/product-service
+#   ports:
+#     - "5001:5001"
+#   environment:
+#     DB_HOST: postgres
+#     DB_PORT: 5432
+#     DB_USER: root
+#     DB_PASS: root
+#     DB_NAME: ecommerce
+#     ES_HOST: http://elasticsearch:9200
+#   depends_on:
+#     - postgres
+#     - elasticsearch
+
+# cart-service:
+#   build: ../../services/cart-service
+#   ports:
+#     - "5002:5002"
+#   environment:
+#     REDIS_HOST: redis
+#     REDIS_PORT: 6379
+#   depends_on:
+#     - redis
+
+# order-service:
+#   build: ../../services/order-service
+#   ports:
+#     - "5003:5003"
+#   environment:
+#     DB_HOST: postgres
+#     DB_PORT: 5432
+#     DB_USER: root
+#     DB_PASS: root
+#     DB_NAME: ecommerce
+#   depends_on:
+#     - postgres
+
+# payment-service:
+#   build: ../../services/payment-service
+#   ports:
+#     - "5004:5004"
+#   environment:
+#     DB_HOST: postgres
+#     DB_PORT: 5432
+#     DB_USER: root
+#     DB_PASS: root
+#     DB_NAME: ecommerce
+#   depends_on:
+#     - postgres
+
+# shipping-service:
+#   build: ../../services/shipping-service
+#   ports:
+#     - "5005:5005"
+#   environment:
+#     DB_HOST: postgres
+#     DB_PORT: 5432
+#     DB_USER: root
+#     DB_PASS: root
+#     DB_NAME: ecommerce
+#   depends_on:
+#     - postgres
+
+# notification-service:
+#   build: ../../services/notification-service
+#   ports:
+#     - "5006:5006"
+#   environment:
+#     RABBITMQ_HOST: rabbitmq
+#     RABBITMQ_PORT: 5672
+#   depends_on:
+#     - rabbitmq
+
+# review-service:
+#   build: ../../services/review-service
+#   ports:
+#     - "5007:5007"
+#   environment:
+#     DB_HOST: postgres
+#     DB_PORT: 5432
+#     DB_USER: root
+#     DB_PASS: root
+#     DB_NAME: ecommerce
+#   depends_on:
+#     - postgres
+
+# search-service:
+#   build: ../../services/search-service
+#   ports:
+#     - "5008:5008"
+#   environment:
+#     ES_HOST: http://elasticsearch:9200
+#   depends_on:
+#     - elasticsearch
+
+volumes:
+  pgdata:

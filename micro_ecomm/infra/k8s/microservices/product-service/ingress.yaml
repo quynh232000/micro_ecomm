@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: product-service-ingress
+  annotations:
+    kubernetes.io/ingress.class: "kong"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /product
+        pathType: Prefix
+        backend:
+          service:
+            name: product-service
+            port:
+              number: 5001
