@@ -85,3 +85,7 @@ bash infra/scripts/setup-full-stack.sh    # Chạy tất cả container và init
 bash infra/scripts/setup-kong-routes.sh  # Tạo tất cả service + route trên Kong
 
 
+docker compose up -d
+# hoặc chỉ restart 1 service
+docker compose restart auth-service
+

@@ -1,5 +1,10 @@
 version: '3.8'
-
+x-kong-config: &kong-env
+  KONG_DATABASE: ${KONG_DATABASE:-postgres}
+  KONG_PG_DATABASE: ${KONG_PG_DATABASE:-kong}
+  KONG_PG_HOST: db
+  KONG_PG_USER: ${KONG_PG_USER:-kong}
+  KONG_PG_PASSWORD_FILE: /run/secrets/kong_postgres_password
 services:
   # --- Postgres ---
   postgres:
@@ -40,49 +45,106 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
 
   # --- Kong ---
-  kong-database:
-    image: postgres:15
+  kong-migrations:
+    image: "${KONG_DOCKER_TAG:-kong:latest}"
+    command: kong migrations bootstrap
+    profiles: ["database"]
+    depends_on:
+      - db
     environment:
-      POSTGRES_USER: kong
-      POSTGRES_DB: kong
-      POSTGRES_PASSWORD: kong
-    ports:
-      - "5433:5432"
+      <<: *kong-env
+    secrets:
+      - kong_postgres_password
+    networks:
+      - microservices_network
+    restart: on-failure
+
+  kong-migrations-up:
+    image: "${KONG_DOCKER_TAG:-kong:latest}"
+    command: kong migrations up && kong migrations finish
+    profiles: ["database"]
+    depends_on:
+      - db
+    environment:
+      <<: *kong-env
+    secrets:
+      - kong_postgres_password
+    networks:
+      - microservices_network
+    restart: on-failure
 
   kong:
-    build: ./kong
-    depends_on:
-      - kong-database
+    image: "${KONG_DOCKER_TAG:-kong:latest}"
+    user: "${KONG_USER:-kong}"
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-database
-      KONG_PG_PASSWORD: kong
-      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      <<: *kong-env
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
-      KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
-      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_PROXY_LISTEN: "${KONG_PROXY_LISTEN:-0.0.0.0:8000}"
+      KONG_ADMIN_LISTEN: "${KONG_ADMIN_LISTEN:-0.0.0.0:8001}"
+      KONG_ADMIN_GUI_LISTEN: "${KONG_ADMIN_GUI_LISTEN:-0.0.0.0:8002}"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_PREFIX: ${KONG_PREFIX:-/var/run/kong}
+      KONG_DECLARATIVE_CONFIG: "/opt/kong/kong.yaml"
+    secrets:
+      - kong_postgres_password
+    networks:
+      - microservices_network
     ports:
-      - "8000:8000"
-      - "8443:8443"
-      - "8001:8001"
-      - "8444:8444"
-    restart: always
+      - "${KONG_INBOUND_PROXY_LISTEN:-0.0.0.0}:8000:8000/tcp"
+      - "${KONG_INBOUND_SSL_PROXY_LISTEN:-0.0.0.0}:8443:8443/tcp"
+      - "8001:8001/tcp"
+      - "8002:8002/tcp"
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    restart: on-failure:5
+    read_only: true
+    volumes:
+      - kong_prefix_vol:${KONG_PREFIX:-/var/run/kong}
+      - kong_tmp_vol:/tmp
+      - ./kong-gateway/config:/opt/kong
+    security_opt:
+      - no-new-privileges
+  db:
+    image: postgres:9.5
+    profiles: ["database"]
+    environment:
+      POSTGRES_DB: ${KONG_PG_DATABASE:-kong}
+      POSTGRES_USER: ${KONG_PG_USER:-kong}
+      POSTGRES_PASSWORD: "kong"
+    secrets:
+      - kong_postgres_password
+    restart: on-failure
+    stdin_open: true
+    tty: true
+    networks:
+      - microservices_network
+    volumes:
+      - kong_data:/var/lib/postgresql/data
   
-# --- Microservices ---
-# auth-service:
-#   build: ../../services/auth-service
-#   ports:
-#     - "5000:5000"
-#   environment:
-#     DB_HOST: postgres
-#     DB_PORT: 5432
-#     DB_USER: root
-#     DB_PASS: root
-#     DB_NAME: ecommerce
-#     JWT_SECRET: secret
-#   depends_on:
-#     - postgres
+    
+  # --- Microservices ---
+  auth-service:
+    build: ../../services/auth-service
+    volumes:
+      - ../../services/auth-service:/app
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: auth-service
+      DB_PASS: auth-service
+      DB_NAME: auth-service
+      JWT_SECRET: auth-service
+    depends_on:
+      - postgres
+    networks:
+      - microservices_network
 
 # product-service:
 #   build: ../../services/product-service
@@ -181,4 +243,17 @@ services:
 #     - elasticsearch
 
 volumes:
-  pgdata:
+  pgdata: {}
+  kong_prefix_vol:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+  kong_tmp_vol:
+    driver_opts:
+      type: tmpfs
+      device: tmpfs
+secrets:
+  kong_postgres_password:
+    file: ./kong-gateway/POSTGRES_PASSWORD
+networks:
+  microservices_network:
