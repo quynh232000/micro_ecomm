@@ -1,6 +1,23 @@
+# Sử dụng Node bản nhẹ
 FROM node:20-alpine
+
+# Thư mục làm việc trong container
 WORKDIR /app
+
+# Copy package.json và package-lock.json trước (tận dụng cache)
 COPY package*.json ./
-RUN npm install
+
+# Cài dependencies (chỉ cài 1 lần khi build)
+RUN npm install --legacy-peer-deps
+
+# Cài nodemon toàn cục
+RUN npm install -g nodemon ts-node typescript
+
+# Copy toàn bộ source code vào container
+COPY . .
+
+# Mở port 5000
 EXPOSE 5000
-CMD ["npm", "run", "start:dev"]
+
+# Chạy dev mode với nodemon + ts-node
+CMD ["npx", "nodemon", "--legacy-watch", "--watch", "src", "--ext", "ts,json", "--exec", "ts-node src/main.ts"]
