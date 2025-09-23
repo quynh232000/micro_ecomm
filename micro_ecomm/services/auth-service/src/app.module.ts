@@ -11,6 +11,9 @@ import { ResourcePermissionModule } from './modules/resource_permission/resource
 import { OrganizationModule } from './modules/organization/organization.module';
 import { UserPermissionModule } from './modules/user_permission/user_permission.module';
 import databaseConfig from './config/database.config';
+import { RouterModule } from '@nestjs/core';
+import { AuthModule } from './modules/auth/auth.module';
+import { InternalModule } from './modules/internal/internal.module';
 @Module({
   imports: [
     UserModule,
@@ -25,9 +28,17 @@ import databaseConfig from './config/database.config';
     ResourcePermissionModule,
     UserPermissionModule,
     OrganizationModule,
+    RouterModule.register([
+      // {
+      //   path: 'api/v1', // prefix cho AuthModule
+      //   module: UserModule,
+      // },
+    ]),
+    AuthModule,
+    InternalModule
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-// eslint-disable-next-line prettier/prettier
+
 export class AppModule { }

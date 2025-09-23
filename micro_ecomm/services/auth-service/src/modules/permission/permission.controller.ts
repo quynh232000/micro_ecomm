@@ -2,12 +2,14 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { PermissionService } from './permission.service';
 import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('permission')
 export class PermissionController {
-  constructor(private readonly permissionService: PermissionService) {}
+  constructor(private readonly permissionService: PermissionService) { }
 
-  @Post()
+  @Post('validate-token')
+  @ApiOperation({ summary: 'tạo permission' })
   create(@Body() createPermissionDto: CreatePermissionDto) {
     return this.permissionService.create(createPermissionDto);
   }
@@ -30,5 +32,10 @@ export class PermissionController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.permissionService.remove(+id);
+  }
+  @Post('role_permission')
+  @ApiOperation({ summary: 'gán permission cho role' })
+  setRolePermission(@Body() createPermissionDto: CreatePermissionDto) {
+    return this.permissionService.create(createPermissionDto);
   }
 }

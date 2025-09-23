@@ -13,7 +13,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
@@ -38,5 +38,22 @@ export class UserController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.remove(+id);
+  }
+  // Self-service
+  @Patch('profile')
+  profile(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
+  }
+  @Patch('me/change-password')
+  changePassword(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
+  }
+  @Post('forgot-password')
+  forgotPassword(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
+  }
+  @Post('reset-password')
+  resetPassword(@Body() createUserDto: CreateUserDto) {
+    return this.userService.create(createUserDto);
   }
 }

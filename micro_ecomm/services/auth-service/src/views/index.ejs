@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %></title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    /* Background GIF */
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: url('https://thuthuatnhanh.com/wp-content/uploads/2020/09/hinh-anh-gif-thanh-pho-hien-dai.gif') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Card container */
+    .card {
+      background-color: rgba(0, 0, 0, 0.6);
+      border: none;
+      border-radius: 1.5rem;
+      padding: 3rem;
+      text-align: center;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      animation: slideUp 1s ease-out;
+    }
+
+    /* Button animation */
+    .btn-custom {
+      background: linear-gradient(45deg, #ff6b6b, #ffcc70);
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+      padding: 0.8rem 2rem;
+      border-radius: 50px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-custom:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px #ffcc70, 0 0 25px #ff6b6b;
+    }
+
+    /* Glow effect inside button */
+    .btn-custom::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -75%;
+      width: 50%; height: 100%;
+      background: rgba(255,255,255,0.3);
+      transform: skewX(-25deg);
+      transition: all 0.5s;
+    }
+
+    .btn-custom:hover::after {
+      left: 125%;
+    }
+
+    /* Heading animation */
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      animation: fadeIn 2s ease forwards;
+    }
+
+    /* Keyframes */
+    @keyframes slideUp {
+      0% { transform: translateY(100px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Welcome to <%= title %>!</h1>
+    <p>Click the button below to view API documentation:</p>
+    <a class="btn btn-custom" href="<%= apiDocsUrl %>">Go to Swagger</a>
+  </div>
+
+  <!-- Bootstrap JS (optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
