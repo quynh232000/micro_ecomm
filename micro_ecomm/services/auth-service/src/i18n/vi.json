@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "email_exists": "Email đã tồn tại",
+    "password_wrong":"Mật khẩu không đúng"
+  }
+}

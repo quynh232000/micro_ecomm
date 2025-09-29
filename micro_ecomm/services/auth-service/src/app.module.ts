@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './modules/user/user.module';
 import { RoleModule } from './modules/role/role.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserRoleModule } from './modules/user_role/user_role.module';
 import { RolePermissionModule } from './modules/role_permission/role_permission.module';
 import { PermissionModule } from './modules/permission/permission.module';
@@ -14,14 +14,29 @@ import databaseConfig from './config/database.config';
 import { RouterModule } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { InternalModule } from './modules/internal/internal.module';
+import { I18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n';
+import * as path from 'path';
+import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [
-    UserModule,
-    RoleModule,
+    
     ConfigModule.forRoot({
       isGlobal: true, // để mọi module đều dùng được process.env
       load: [databaseConfig],
     }),
+     TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const db = configService.get('database'); // 👈 lấy ra object từ registerAs
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return {
+          ...db,
+          entities: [__dirname + '/**/*.entity{.ts,.js}'], // fallback nếu không autoLoadEntities
+        };
+      },
+    }),
+    UserModule,
+    RoleModule,
     UserRoleModule,
     RolePermissionModule,
     PermissionModule,
@@ -35,7 +50,19 @@ import { InternalModule } from './modules/internal/internal.module';
       // },
     ]),
     AuthModule,
-    InternalModule
+    InternalModule,
+    // i18n
+    I18nModule.forRoot({
+      fallbackLanguage: 'vi',
+      loaderOptions: {
+        path: path.join(__dirname, '/i18n/'),
+        watch: true,
+      },
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        AcceptLanguageResolver,
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

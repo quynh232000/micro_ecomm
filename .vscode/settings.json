@@ -1,0 +1,21 @@
+{
+  // Bật format khi lưu
+  "editor.formatOnSave": true,
+
+  // Nếu bạn dùng Prettier
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Format khi paste
+  "editor.formatOnPaste": true,
+
+  // Nếu muốn chỉ định cho từng ngôn ngữ
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[php]": {
+    "editor.defaultFormatter": "bmewburn.vscode-intelephense-client"
+  }
+}

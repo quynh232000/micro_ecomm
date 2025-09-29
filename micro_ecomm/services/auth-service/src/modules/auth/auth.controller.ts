@@ -1,35 +1,40 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { RegisterAuthDto } from './dto/register-auth.dto';
+import { LoginAuthDto } from './dto/login-auth.dto';
+import { ApiResponseHelper } from '../../common/response/api-response';
 
 @Controller()
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  register(@Body() registerAuthDto: RegisterAuthDto) {
+    return this.authService.register(registerAuthDto);
   }
   @Post('login')
-  login(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  login(@Body() loginAuthDto: LoginAuthDto) {
+    try {
+      return this.authService.login(loginAuthDto);
+    } catch (error) {
+      return ApiResponseHelper.error('Lỗi: ' + error);
+    }
   }
 
   @Get('me')
   me() {
-    return this.authService.findAll();
+    return this.authService.me();
   }
   @Post('logout')
-  logout(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  logout() {
+    return this.authService.logout();
   }
   @Post('refresh')
-  refresh(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  refresh() {
+    return this.authService.refresh();
   }
   @Post('verify-token')
-  verifyToken(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
+  verifyToken() {
+    return this.authService.verifyToken();
   }
-
 }
