@@ -17,14 +17,15 @@ import { InternalModule } from './modules/internal/internal.module';
 import { I18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import redisConfig from './config/redis.config';
+import { CacheModule } from './infrastructure/cache/cache.module';
 @Module({
   imports: [
-    
     ConfigModule.forRoot({
       isGlobal: true, // để mọi module đều dùng được process.env
-      load: [databaseConfig],
+      load: [databaseConfig, redisConfig],
     }),
-     TypeOrmModule.forRootAsync({
+    TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const db = configService.get('database'); // 👈 lấy ra object từ registerAs
@@ -35,6 +36,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         };
       },
     }),
+    AuthModule,
     UserModule,
     RoleModule,
     UserRoleModule,
@@ -49,7 +51,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       //   module: UserModule,
       // },
     ]),
-    AuthModule,
     InternalModule,
     // i18n
     I18nModule.forRoot({
@@ -58,14 +59,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         path: path.join(__dirname, '/i18n/'),
         watch: true,
       },
-      resolvers: [
-        { use: QueryResolver, options: ['lang'] },
-        AcceptLanguageResolver,
-      ],
+      resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
     }),
+    CacheModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-
-export class AppModule { }
+export class AppModule {}
