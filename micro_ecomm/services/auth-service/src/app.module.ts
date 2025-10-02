@@ -19,6 +19,11 @@ import * as path from 'path';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import redisConfig from './config/redis.config';
 import { CacheModule } from './infrastructure/cache/cache.module';
+
+// mail
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -62,6 +67,25 @@ import { CacheModule } from './infrastructure/cache/cache.module';
       resolvers: [{ use: QueryResolver, options: ['lang'] }, AcceptLanguageResolver],
     }),
     CacheModule,
+    // mail
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.MAIL_HOST,
+        port: parseInt(process.env.MAIL_PORT || '', 10),
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS,
+        },
+      },
+      defaults: {
+        from: `"No Reply" <${process.env.MAIL_FROM}>`,
+      },
+      template: {
+        dir: path.join(__dirname, '..', 'templates/mail'),
+        adapter: new HandlebarsAdapter(),
+        options: { strict: true },
+      },
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
